@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
@@ -32,22 +32,13 @@ const App = () => {
   const [quotes, setQuotes] = useState([]);
   const [uniqueQuote, setUniqueQuote] = useState({ quote: '', author: '' });
   const [color, setColor] = useState('');
+  const quoteContainer = useRef(null);
 
   const fetchData = async () => {
     const response = await fetch(url);
     const data = await response.json();
     setQuotes(data.quotes);
-
-    const randomNumber = Math.floor(Math.random() * data.quotes.length);
-    const randomQuotes = data.quotes[randomNumber];
-    const quote = randomQuotes.quote;
-    const author = randomQuotes.author;
-    setUniqueQuote({ quote, author });
-
-    const randomColor = Math.floor(Math.random() * colors.length);
-    setColor(colors[randomColor]);
-    document.body.style.background = colors[randomColor];
-
+    getQuote(data.quotes);
     setLoading(false);
   };
 
@@ -55,28 +46,36 @@ const App = () => {
     fetchData();
   }, []);
 
-  const getQuote = () => {
-    const randomNumber = Math.floor(Math.random() * quotes.length);
-    const randomQuotes = quotes[randomNumber];
+  const getQuote = (quoteArr) => {
+    if (quoteContainer.current) {
+      quoteContainer.current.style.opacity = 0;
+    }
+
+    const randomNumber = Math.floor(Math.random() * quoteArr.length);
+    const randomQuotes = quoteArr[randomNumber];
     const quote = randomQuotes.quote;
     const author = randomQuotes.author;
-    setUniqueQuote({ quote, author });
 
     const randomColor = Math.floor(Math.random() * colors.length);
     setColor(colors[randomColor]);
     document.body.style.background = colors[randomColor];
+
+    setTimeout(() => {
+      setUniqueQuote({ quote, author });
+      if (quoteContainer.current) {
+        quoteContainer.current.style.opacity = 1;
+      }
+    }, 600);
   };
 
   if (loading) {
     return <></>;
   }
 
-  console.log(uniqueQuote);
-
   return (
     <main id="quote-box" style={{ color: `${color}` }}>
       <div className="container">
-        <div className="quote-container">
+        <div className="quote-container" ref={quoteContainer}>
           <h1 id="text">
             <span>
               <svg
@@ -95,7 +94,7 @@ const App = () => {
         </div>
         <div className="btn-container">
           <a
-            href=""
+            href={`https://twitter.com/intent/tweet?hashtags=quotes&related=freecodecamp&text="${uniqueQuote.quote}" by ${uniqueQuote.author}`}
             className="btn"
             style={{ background: `${color}` }}
             id="tweet-quote"
@@ -112,7 +111,7 @@ const App = () => {
           </a>
           <button
             className="btn"
-            onClick={getQuote}
+            onClick={() => getQuote(quotes)}
             id="new-quote"
             style={{ background: `${color}` }}
           >
